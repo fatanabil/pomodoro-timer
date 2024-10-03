@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ResetIcon from './assets/icons/ResetIcon';
 import Navbar from './components/Navbar';
 import usePomodoroTimer from './hooks/usePomodoroTimer';
@@ -90,6 +90,10 @@ function App() {
         setCycle(1);
         resetTimer();
     };
+
+    useEffect(() => {
+        setInitialTime(focusDuration);
+    }, [focusDuration]);
 
     return (
         <>
