@@ -15,22 +15,24 @@ function App() {
     const [cycle, setCycle] = useState(1);
 
     const showNotification = () => {
-        if (Notification.permission === 'granted') {
-            const notification = new Notification(`${status.toLocaleUpperCase()} time is up!`, {
-                body: `${
-                    status === 'focus'
-                        ? `You can rest for ${Math.floor((restDuration / 60) * 100) / 100} minutes`
-                        : status === 'rest' && cycle === totalCycles
-                        ? `All cycle completed!\ncycle : ${cycle} / ${totalCycles}`
-                        : `Let's start focus again for ${Math.floor((focusDuration / 60) * 100) / 100} minutes, cycle : ${cycle}/${totalCycles}`
-                }`,
-            });
-
-            notification.onclick = () => {
-                window.focus();
-            };
-        } else {
-            console.log('Notification permission denied.');
+        if ('Notification' in window && 'serviceworker' in navigator) {
+            if (Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then((reg) => {
+                    reg.showNotification(`${status.toLocaleUpperCase()} time is up!`, {
+                        body: `${
+                            status === 'focus'
+                                ? `You can rest for ${Math.floor((restDuration / 60) * 100) / 100} minutes`
+                                : status === 'rest' && cycle === totalCycles
+                                ? `All cycle completed!\ncycle : ${cycle} / ${totalCycles}`
+                                : `Let's start focus again for ${Math.floor((focusDuration / 60) * 100) / 100} minutes, cycle : ${cycle}/${totalCycles}`
+                        }`,
+                        icon: '/logo.png',
+                        vibrate: [200, 100, 200],
+                    });
+                });
+            } else {
+                console.log('Notification permission denied.');
+            }
         }
     };
 
