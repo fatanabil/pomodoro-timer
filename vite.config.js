@@ -15,7 +15,7 @@ export default defineConfig({
                 theme_color: '#184E77',
                 background_color: '#FFFFFF',
                 display: 'standalone',
-                start_url: '/',
+                start_url: '/pomodoro-timer/',
                 icons: [
                     {
                         src: '/logo.png',
