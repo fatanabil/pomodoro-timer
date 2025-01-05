@@ -5,7 +5,7 @@ self.addEventListener('install', (ev) => {
     console.log('[Service Worker] installed');
     ev.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([urlToCache]);
+            return cache.addAll(urlToCache);
         })
     );
 });
