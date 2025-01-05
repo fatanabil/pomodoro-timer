@@ -31,10 +31,6 @@ function App() {
                         tag: 'pomodoro-notification',
                         actions: [
                             {
-                                action: 'explore',
-                                title: 'Back to site',
-                            },
-                            {
                                 action: 'close',
                                 title: 'Close',
                             },

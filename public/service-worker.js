@@ -1,4 +1,3 @@
-const BASE_URL = 'https://fatanabil.github.io/pomodoro-timer/';
 const CACHE_NAME = 'pomodoro-timer-cache-v1';
 const urlToCache = ['/pomodoro-timer/', '/pomodoro-timer/index.html', '/pomodoro-timer/manifest.json', '/pomodoro-timer/logo.png'];
 
@@ -39,18 +38,5 @@ self.addEventListener('notificationclick', (ev) => {
 
     if (action === 'close') {
         notification.close();
-    } else {
-        notification.close();
-        ev.waitUntil(
-            clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-                const client = clientList.find((client) => client.url === BASE_URL && client.focus());
-                console.log(client);
-                if (client) {
-                    client.focus();
-                } else {
-                    clients.openWindow(BASE_URL);
-                }
-            })
-        );
     }
 });
