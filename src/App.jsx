@@ -15,7 +15,7 @@ function App() {
     const [cycle, setCycle] = useState(1);
 
     const showNotification = () => {
-        if ('Notification' in window && 'serviceworker' in navigator) {
+        if ('Notification' in window && 'serviceWorker' in navigator) {
             if (Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then((reg) => {
                     reg.showNotification(`${status.toLocaleUpperCase()} time is up!`, {
@@ -26,8 +26,19 @@ function App() {
                                 ? `All cycle completed!\ncycle : ${cycle} / ${totalCycles}`
                                 : `Let's start focus again for ${Math.floor((focusDuration / 60) * 100) / 100} minutes, cycle : ${cycle}/${totalCycles}`
                         }`,
-                        icon: '/logo.png',
+                        icon: '/pomodoro-timer/logo.png',
                         vibrate: [200, 100, 200],
+                        tag: 'pomodoro-notification',
+                        actions: [
+                            {
+                                action: 'explore',
+                                title: 'Back to site',
+                            },
+                            {
+                                action: 'close',
+                                title: 'Close',
+                            },
+                        ],
                     });
                 });
             } else {
