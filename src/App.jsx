@@ -18,23 +18,25 @@ function App() {
         if ('Notification' in window && 'serviceWorker' in navigator) {
             if (Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then((reg) => {
-                    reg.showNotification(`${status.toLocaleUpperCase()} time is up!`, {
-                        body: `${
-                            status === 'focus'
-                                ? `You can rest for ${Math.floor((restDuration / 60) * 100) / 100} minutes`
-                                : status === 'rest' && cycle === totalCycles
-                                ? `All cycle completed!\ncycle : ${cycle} / ${totalCycles}`
-                                : `Let's start focus again for ${Math.floor((focusDuration / 60) * 100) / 100} minutes, cycle : ${cycle}/${totalCycles}`
-                        }`,
-                        icon: '/pomodoro-timer/logo.png',
-                        vibrate: [200, 100, 200],
-                        tag: 'pomodoro-notification',
-                        actions: [
-                            {
-                                action: 'close',
-                                title: 'Close',
-                            },
-                        ],
+                    reg.active.postMessage({
+                        type: 'NOTIFICATION_UPDATE',
+                        data: {
+                            title: `${status.toLocaleUpperCase()} time is up!`,
+                            body: (() => {
+                                if (status === 'rest' && cycle === totalCycles) {
+                                    return `All cycle completed!\ncycle : ${cycle} / ${totalCycles}\n${"It's time for long break!".toUpperCase()}`;
+                                }
+
+                                if (status === 'focus') {
+                                    return `You can rest for ${Math.floor((restDuration / 60) * 100) / 100} minutes`;
+                                }
+
+                                if (status == 'rest') {
+                                    return `Let's start focus again for ${Math.floor((focusDuration / 60) * 100) / 100} minutes, cycle : ${cycle}/${totalCycles}`;
+                                }
+                            })(),
+                            notiftype: status,
+                        },
                     });
                 });
             } else {
@@ -104,6 +106,21 @@ function App() {
         setInitialTime(focusDuration);
     }, [focusDuration]);
 
+    // useEffect(() => {
+    //     if ('serviceWorker' in navigator) {
+    //         navigator.serviceWorker.addEventListener('message', function (event) {
+    //             if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+    //                 let audioFile = '';
+    //                 if (status === 'focus') {
+    //                     audioFile = '/pomodoro-timer/sound/notif-focus.mp3';
+    //                 }
+    //                 const audio = new Audio(audioFile);
+    //                 audio.play().catch((err) => console.warn(`Failed to play audio:`, err));
+    //             }
+    //         });
+    //     }
+    // }, []);
+
     return (
         <>
             <Navbar />
@@ -131,9 +148,9 @@ function App() {
                             .padStart(2, '0')}
                     </p>
                 </div>
-                <div className='flex relative justify-center'>
+                <div className='relative flex justify-center'>
                     <button
-                        className='bg-ocean-green disabled:bg-slate-500 text-white rounded-md w-fit px-10 disabled:ring-0 py-2 mt-8 hover:ring-1 ring-white transition-all duration-150 active:scale-90 relative z-10'
+                        className='relative z-10 px-10 py-2 mt-8 text-white transition-all duration-150 rounded-md bg-ocean-green disabled:bg-slate-500 w-fit disabled:ring-0 hover:ring-1 ring-white active:scale-90'
                         onClick={startTimer}
                         disabled={isActive}
                     >
@@ -146,7 +163,7 @@ function App() {
                         onClick={resetAll}
                         disabled={!isActive}
                     >
-                        <ResetIcon className='size-6 group-hover:rotate-180 group-disabled:group-hover:rotate-0 transition-all duration-500' />
+                        <ResetIcon className='transition-all duration-500 size-6 group-hover:rotate-180 group-disabled:group-hover:rotate-0' />
                     </button>
                 </div>
                 <p className={`text-slate-500 hover:underline hover:cursor-pointer mt-6 text-center ${isActive ? 'invisible' : 'visible'}`} onClick={() => showModal()}>
