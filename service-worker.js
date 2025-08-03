@@ -40,3 +40,24 @@ self.addEventListener('notificationclick', (ev) => {
         notification.close();
     }
 });
+
+self.addEventListener('message', function (event) {
+    const message = event.data;
+
+    if (message.type === 'NOTIFICATION_UPDATE') {
+        console.log('Show notif');
+
+        self.registration.showNotification(message.data.title, {
+            body: message.data.body,
+            icon: '/pomodoro-timer/logo.png',
+            vibrate: [200, 100, 200],
+            tag: 'pomodoro-notification' + Date.now(),
+            actions: [
+                {
+                    action: 'close',
+                    title: 'Close',
+                },
+            ],
+        });
+    }
+});
