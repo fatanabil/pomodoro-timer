@@ -13,6 +13,7 @@ const usePictureInPicture = (isActive, timerState, pipEnabled = true) => {
     const pipWindowRef = useRef(null);
     const hasUserActivationRef = useRef(true);
     const lastActivationTimeRef = useRef(Date.now());
+    const isActiveRef = useRef(isActive);
 
     useEffect(() => {
         const saved = localStorage.getItem('pip-size');
@@ -235,8 +236,21 @@ const usePictureInPicture = (isActive, timerState, pipEnabled = true) => {
     }, [isActive, pipWindow, openPiP, closePiP, pipEnabled]);
 
     useEffect(() => {
+        isActiveRef.current = isActive;
+    }, [isActive]);
+
+    useEffect(() => {
         if ((!isActive || !pipEnabled) && pipWindow) {
-            closePiP();
+            const timeoutId = setTimeout(() => {
+
+                if (!isActiveRef.current && pipWindowRef.current) {
+                    closePiP();
+                }
+            }, 600); 
+
+            return () => {
+                clearTimeout(timeoutId);
+            };
         }
     }, [isActive, pipWindow, pipEnabled, closePiP]);
     
