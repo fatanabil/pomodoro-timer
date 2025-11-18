@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import XIcon from '../assets/icons/XIcon';
 
@@ -11,7 +12,21 @@ const CustomDurationModal = ({
     handleOnChangeTotalCycles,
     isShowModal,
     closeModal,
+    pipSize,
+    updatePipSize,
+    isPiPSupported,
+    pipEnabled,
+    handleOnChangePipEnabled,
 }) => {
+    const [pipWidth, setPipWidth] = useState(pipSize?.width || 300);
+    const [pipHeight, setPipHeight] = useState(pipSize?.height || 200);
+
+    useEffect(() => {
+        if (pipSize) {
+            setPipWidth(pipSize.width || 300);
+            setPipHeight(pipSize.height || 200);
+        }
+    }, [pipSize]);
     const totalMinutes = Math.floor((focusDuration / 60 + restDuration / 60) * totalCycles * 10) / 10;
     const totalHours = Math.floor((totalMinutes / 60) * 10) / 10;
 
@@ -83,6 +98,93 @@ const CustomDurationModal = ({
                         Total time to completed cycle : {totalMinutes} minutes {`(${totalHours} hours)`}
                     </p>
                 </div>
+                {isPiPSupported && (
+                    <div className='flex flex-col gap-2 pt-2 border-t border-slate-300 dark:border-slate-600'>
+                        <div className='flex items-center justify-between mb-2'>
+                            <label className='text-sm font-semibold'>Picture-in-Picture</label>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                                <input
+                                    type='checkbox'
+                                    id='pip-enabled'
+                                    checked={pipEnabled}
+                                    onChange={handleOnChangePipEnabled}
+                                    className='w-4 h-4 text-ocean-green bg-slate-300 dark:bg-slate-600 border-slate-300 rounded focus:ring-ocean-green focus:ring-2'
+                                />
+                                <span className='text-sm'>Enable PiP</span>
+                            </label>
+                        </div>
+                        {pipEnabled && (
+                            <div className='flex flex-col gap-3'>
+                                <label className='text-sm font-semibold'>Window Size</label>
+                                <div className='flex gap-3 items-center'>
+                                    <label htmlFor='pip-width' className='text-sm w-20'>Width:</label>
+                                    <input
+                                        type='number'
+                                        inputMode='number'
+                                        id='pip-width'
+                                        min='200'
+                                        max='800'
+                                        className='bg-slate-300 dark:bg-slate-600 outline-none dark:text-white py-2 px-3 rounded-md grow'
+                                        value={pipWidth}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setPipWidth(value);
+                                        }}
+                                        onBlur={(e) => {
+                                            const numValue = parseInt(e.target.value);
+                                            const currentHeight = typeof pipHeight === 'number' ? pipHeight : (parseInt(pipHeight) || pipSize?.height || 200);
+                                            if (isNaN(numValue) || numValue < 200) {
+                                                setPipWidth(200);
+                                                updatePipSize(200, currentHeight);
+                                            } else if (numValue > 800) {
+                                                setPipWidth(800);
+                                                updatePipSize(800, currentHeight);
+                                            } else {
+                                                setPipWidth(numValue);
+                                                updatePipSize(numValue, currentHeight);
+                                            }
+                                        }}
+                                    />
+                                    <p className='text-sm'>px</p>
+                                </div>
+                                <div className='flex gap-3 items-center'>
+                                    <label htmlFor='pip-height' className='text-sm w-20'>Height:</label>
+                                    <input
+                                        type='number'
+                                        inputMode='number'
+                                        id='pip-height'
+                                        min='150'
+                                        max='600'
+                                        className='bg-slate-300 dark:bg-slate-600 outline-none dark:text-white py-2 px-3 rounded-md grow'
+                                        value={pipHeight}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setPipHeight(value);
+                                        }}
+                                        onBlur={(e) => {
+                                            const numValue = parseInt(e.target.value);
+                                            const currentWidth = typeof pipWidth === 'number' ? pipWidth : (parseInt(pipWidth) || pipSize?.width || 300);
+                                            if (isNaN(numValue) || numValue < 150) {
+                                                setPipHeight(150);
+                                                updatePipSize(currentWidth, 150);
+                                            } else if (numValue > 600) {
+                                                setPipHeight(600);
+                                                updatePipSize(currentWidth, 600);
+                                            } else {
+                                                setPipHeight(numValue);
+                                                updatePipSize(currentWidth, numValue);
+                                            }
+                                        }}
+                                    />
+                                    <p className='text-sm'>px</p>
+                                </div>
+                                <p className='text-xs text-slate-400'>
+                                    PiP window will automatically open when you switch tabs during an active timer.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <div className='flex w-full justify-between'>
                     <button
                         className='px-6 hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-150 rounded-md active:scale-95'
