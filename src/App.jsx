@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
 import ResetIcon from './assets/icons/ResetIcon';
 import Navbar from './components/Navbar';
 import usePomodoroTimer from './hooks/usePomodoroTimer';
 import CustomDurationModal from './components/CustomDurationModal';
 import useModal from './hooks/useModal';
+import usePictureInPicture from './hooks/usePictureInPicture';
+import PiPWindow from './components/PiPWindow';
 
 function App() {
     const DURATION = { focus: 1500, rest: 300, cycle: 4 };
@@ -13,6 +16,10 @@ function App() {
     const [status, setStatus] = useState('focus');
     const [totalCycles, setTotalCycles] = useState(DURATION.cycle);
     const [cycle, setCycle] = useState(1);
+    const [pipEnabled, setPipEnabled] = useState(() => {
+        const saved = localStorage.getItem('pip-enabled');
+        return saved !== null ? JSON.parse(saved) : true; // default true
+    });
 
     const showNotification = () => {
         if ('Notification' in window && 'serviceWorker' in navigator) {
@@ -73,6 +80,17 @@ function App() {
 
     const { timeLeft, isActive, startTimer, resetTimer } = usePomodoroTimer(initialTime, handleExpired, changeStatus);
     const { isShow: isShowModal, showModal, closeModal } = useModal();
+    const pipRootRef = useRef(null);
+    
+    const timerState = {
+        timeLeft,
+        isActive,
+        status,
+        cycle,
+        totalCycles,
+    };
+
+    const { pipWindow, pipSize, updatePipSize, isSupported: isPiPSupported } = usePictureInPicture(isActive, timerState, pipEnabled);
 
     const handleOnChangeFocusDuration = (ev) => {
         const newDuration = ev.target.value;
@@ -93,7 +111,18 @@ function App() {
         setFocusDuration(DURATION.focus);
         setRestDuration(DURATION.rest);
         setTotalCycles(DURATION.cycle);
+        setPipEnabled(true);
     };
+
+    const handleOnChangePipEnabled = (ev) => {
+        const enabled = ev.target.checked;
+        setPipEnabled(enabled);
+    };
+
+    // Save pipEnabled to localStorage when changed
+    useEffect(() => {
+        localStorage.setItem('pip-enabled', JSON.stringify(pipEnabled));
+    }, [pipEnabled]);
 
     const resetAll = () => {
         setStatus('focus');
@@ -105,6 +134,71 @@ function App() {
     useEffect(() => {
         setInitialTime(focusDuration);
     }, [focusDuration]);
+
+    // Render PiP Window content
+    useEffect(() => {
+        if (pipWindow && pipWindow.document && !pipWindow.closed) {
+            const pipRoot = pipWindow.document.getElementById('pip-root');
+            if (pipRoot) {
+                // Reset root if window was closed and reopened
+                if (pipRootRef.current) {
+                    try {
+                        pipRootRef.current.render(
+                            <PiPWindow
+                                timerState={timerState}
+                                onStartTimer={startTimer}
+                                onResetTimer={resetAll}
+                                onClose={() => {
+                                    if (pipWindow && !pipWindow.closed) {
+                                        pipWindow.close();
+                                    }
+                                }}
+                            />
+                        );
+                    } catch (e) {
+                        // If render fails, create new root
+                        pipRootRef.current = ReactDOM.createRoot(pipRoot);
+                        pipRootRef.current.render(
+                            <PiPWindow
+                                timerState={timerState}
+                                onStartTimer={startTimer}
+                                onResetTimer={resetAll}
+                                onClose={() => {
+                                    if (pipWindow && !pipWindow.closed) {
+                                        pipWindow.close();
+                                    }
+                                }}
+                            />
+                        );
+                    }
+                } else {
+                    pipRootRef.current = ReactDOM.createRoot(pipRoot);
+                    pipRootRef.current.render(
+                        <PiPWindow
+                            timerState={timerState}
+                            onStartTimer={startTimer}
+                            onResetTimer={resetAll}
+                            onClose={() => {
+                                if (pipWindow && !pipWindow.closed) {
+                                    pipWindow.close();
+                                }
+                            }}
+                        />
+                    );
+                }
+            }
+        } else if (!pipWindow) {
+            // Window closed, reset root ref
+            pipRootRef.current = null;
+        }
+
+        return () => {
+            // Cleanup when component unmounts or window closes
+            if (!pipWindow || (pipWindow && pipWindow.closed)) {
+                pipRootRef.current = null;
+            }
+        };
+    }, [pipWindow, timerState, startTimer, resetAll]);
 
     // useEffect(() => {
     //     if ('serviceWorker' in navigator) {
@@ -167,7 +261,7 @@ function App() {
                     </button>
                 </div>
                 <p className={`text-slate-500 hover:underline hover:cursor-pointer mt-6 text-center ${isActive ? 'invisible' : 'visible'}`} onClick={() => showModal()}>
-                    Custom duration?
+                    Custom duration? or settings?
                 </p>
                 <div className='flex flex-col gap-4 mt-2'>
                     <h1
@@ -192,6 +286,11 @@ function App() {
                 resetDuration={resetDuration}
                 isShowModal={isShowModal}
                 closeModal={closeModal}
+                pipSize={pipSize}
+                updatePipSize={updatePipSize}
+                isPiPSupported={isPiPSupported}
+                pipEnabled={pipEnabled}
+                handleOnChangePipEnabled={handleOnChangePipEnabled}
             />
         </>
     );
